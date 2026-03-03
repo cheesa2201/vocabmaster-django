@@ -1,0 +1,40 @@
+{% comment %}view_file.html{% endcomment %}
+{% extends 'base.html' %}
+{% block title %}{{ file.title|default:"Xem File" }} · VocabMaster{% endblock %}
+{% block page_title %}{{ file.title|default:file.file.name|truncatechars:40 }}{% endblock %}
+{% block topbar_actions %}
+<span style="font-size:.8rem;color:var(--muted);">Còn <strong style="color:{% if file.days_remaining <= 3 %}var(--danger){% elif file.days_remaining <= 7 %}var(--accent){% else %}var(--muted){% endif %};">{{ file.days_remaining }} ngày</strong></span>
+<a href="{% url 'file_list' %}" class="vm-btn vm-btn-ghost">← Quay lại</a>
+{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        {% if file.file.name|lower|slice:"-4:" == ".pdf" %}
+        <iframe src="{{ file.file.url }}" width="100%" height="680"
+                style="border:1px solid var(--border);border-radius:10px;background:#fff;"></iframe>
+        {% else %}
+        <div class="vm-card text-center" style="padding:40px;">
+            <div style="font-size:3rem;margin-bottom:10px;">📄</div>
+            <div style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:6px;">File DOCX</div>
+            <div style="color:var(--muted);font-size:.875rem;margin-bottom:16px;">Không thể xem trực tiếp trong browser</div>
+            <a href="{{ file.file.url }}" class="vm-btn vm-btn-primary" download>⬇️ Tải xuống</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-lg-4">
+        <div class="vm-card">
+            <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace;margin-bottom:14px;">📝 Ghi chú</div>
+            <form method="post" action="{% url 'save_note' file.pk %}">{% csrf_token %}
+                <textarea name="note" class="vm-input mb-3" rows="10"
+                          placeholder="Ghi chú, từ mới, nhận xét...">{% if file.notes_json %}{{ file.notes_json.0.text|default:"" }}{% endif %}</textarea>
+                <button type="submit" class="vm-btn vm-btn-primary w-100" style="justify-content:center;">💾 Lưu ghi chú</button>
+            </form>
+            {% if file.notes_json %}
+            <div style="font-size:.72rem;color:var(--muted);margin-top:8px;font-family:'DM Mono',monospace;">
+                Lưu lúc: {{ file.notes_json.0.saved_at|slice:":16" }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

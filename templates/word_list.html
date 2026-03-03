@@ -1,0 +1,57 @@
+{% comment %}word_list.html{% endcomment %}
+{% extends 'base.html' %}
+{% block title %}Từ vựng · VocabMaster{% endblock %}
+{% block page_title %}Từ vựng <span style="font-family:'DM Mono',monospace;font-size:.9rem;color:var(--muted);">({{ total }})</span>{% endblock %}
+{% block nav_words %}active{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'import_excel' %}" class="vm-btn vm-btn-primary">+ Import</a>
+{% endblock %}
+{% block content %}
+<form method="get" class="d-flex gap-2 mb-4 flex-wrap">
+    <select name="lang" class="vm-input" style="width:auto;" onchange="this.form.submit()">
+        <option value="" {% if not lang_filter %}selected{% endif %}>Tất cả ngôn ngữ</option>
+        {% for code, label in lang_choices %}<option value="{{ code }}" {% if lang_filter == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <select name="mastery" class="vm-input" style="width:auto;" onchange="this.form.submit()">
+        <option value="" {% if not mastery_filter %}selected{% endif %}>Tất cả mức độ</option>
+        <option value="0" {% if mastery_filter == '0' %}selected{% endif %}>Chưa nhớ</option>
+        <option value="1" {% if mastery_filter == '1' %}selected{% endif %}>Đang học</option>
+        <option value="2" {% if mastery_filter == '2' %}selected{% endif %}>Thành thạo</option>
+    </select>
+    {% if lang_filter or mastery_filter %}<a href="{% url 'word_list' %}" class="vm-btn vm-btn-ghost">✕ Reset</a>{% endif %}
+</form>
+
+{% if words %}
+<div class="vm-card" style="padding:0;overflow:hidden;">
+<table class="vm-table">
+    <thead><tr><th>Từ</th><th>Lang</th><th>Cách đọc</th><th>Nghĩa</th><th>Loại</th><th>Mức độ</th></tr></thead>
+    <tbody>
+    {% for w in words %}
+    <tr>
+        <td><strong style="font-family:'Playfair Display',serif;">{{ w.word }}</strong></td>
+        <td><span class="badge-lang badge-{{ w.lang }}">{{ w.lang|upper }}</span></td>
+        <td style="font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);">{{ w.reading|default:"—" }}</td>
+        <td style="max-width:200px;">{{ w.meaning|truncatechars:60 }}</td>
+        <td style="font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;">{{ w.word_type|default:"—" }}</td>
+        <td>
+            {% if w.mastery == 0 %}<span class="badge-lang badge-mastery-0">Chưa nhớ</span>
+            {% elif w.mastery == 1 %}<span class="badge-lang badge-mastery-1">Đang học</span>
+            {% else %}<span class="badge-lang badge-mastery-2">Thành thạo</span>{% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="vm-card text-center" style="padding:40px;">
+    <div style="font-size:2.5rem;margin-bottom:10px;">📭</div>
+    {% if lang_filter or mastery_filter %}
+        <div style="color:var(--muted);">Không có từ nào khớp bộ lọc.</div>
+    {% else %}
+        <div style="font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:8px;">Chưa có từ vựng</div>
+        <a href="{% url 'import_excel' %}" class="vm-btn vm-btn-primary">📤 Import ngay</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

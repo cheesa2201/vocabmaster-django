@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Lịch sử Quiz · VocabMaster{% endblock %}
+{% block page_title %}Lịch sử Quiz{% endblock %}
+{% block nav_history %}active{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'quiz_home' %}" class="vm-btn vm-btn-primary">+ Quiz mới</a>
+{% endblock %}
+{% block content %}
+{% if sessions %}
+<div class="vm-card">
+<table class="vm-table">
+    <thead>
+        <tr>
+            <th>Ngày</th><th>Loại</th><th>Ngôn ngữ</th><th>Điểm</th><th>Kết quả</th><th>Thời gian</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for s in sessions %}
+    <tr>
+        <td style="font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);">{{ s.started_at|date:"d/m/Y H:i" }}</td>
+        <td>
+            {% if s.quiz_type == 'fill' %}
+                <span style="font-size:.75rem;font-family:'DM Mono',monospace;color:var(--info);">FILL</span>
+            {% else %}
+                <span style="font-size:.75rem;font-family:'DM Mono',monospace;color:var(--accent);">MULTI</span>
+            {% endif %}
+        </td>
+        <td>
+            {% if s.lang %}<span class="badge-lang badge-{{ s.lang }}">{{ s.lang|upper }}</span>
+            {% else %}<span style="font-size:.75rem;color:var(--muted);">All</span>{% endif %}
+        </td>
+        <td>
+            <strong class="
+                {% if s.score_percent >= 80 %}text-success
+                {% elif s.score_percent >= 50 %}text-warning
+                {% else %}text-danger{% endif %}
+                " style="font-family:'Playfair Display',serif;font-size:1.1rem;">{{ s.score_percent }}%</strong>
+        </td>
+        <td style="font-size:.85rem;color:var(--muted);">{{ s.correct_count }}/{{ s.total_questions }}</td>
+        <td style="font-size:.8rem;color:var(--muted);font-family:'DM Mono',monospace;">{% if s.duration_seconds %}{{ s.duration_seconds }}s{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="vm-card text-center" style="padding:48px;">
+    <div style="font-size:3rem;margin-bottom:12px;">📊</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:8px;">Chưa có lịch sử</div>
+    <a href="{% url 'quiz_home' %}" class="vm-btn vm-btn-primary">Bắt đầu quiz đầu tiên →</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,115 @@
+{% comment %}quiz_home.html{% endcomment %}
+{% extends 'base.html' %}
+{% block title %}Quiz · VocabMaster{% endblock %}
+{% block page_title %}Quiz{% endblock %}
+{% block nav_quiz %}active{% endblock %}
+{% block extra_head %}
+<style>
+.quiz-type-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+}
+.quiz-type-card:hover, .quiz-type-card.selected {
+    border-color: var(--accent);
+    background: rgba(240,165,0,.06);
+}
+.quiz-type-card input { display: none; }
+.lang-option {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all .15s;
+    text-align: center;
+    font-size: .85rem;
+}
+.lang-option:hover, .lang-option.selected { border-color: var(--accent); color: var(--accent); }
+.lang-option input { display: none; }
+</style>
+{% endblock %}
+{% block content %}
+{% if total < 4 %}
+<div class="vm-card text-center" style="padding:48px;">
+    <div style="font-size:3rem;margin-bottom:12px;">📭</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:8px;">Cần ít nhất 4 từ vựng</div>
+    <a href="{% url 'import_excel' %}" class="vm-btn vm-btn-primary">📤 Import ngay</a>
+</div>
+{% else %}
+<div class="row justify-content-center"><div class="col-lg-6">
+<form method="post" action="{% url 'quiz_start' %}">{% csrf_token %}
+
+<div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace;margin-bottom:10px;">Loại Quiz</div>
+<div class="row g-3 mb-4">
+    <div class="col-6">
+        <label class="quiz-type-card selected" id="lbl_fill" onclick="selectType('fill')">
+            <input type="radio" name="quiz_type" value="fill" checked>
+            <div style="font-size:2rem;margin-bottom:8px;">✏️</div>
+            <div style="font-weight:600;">Fill in the blank</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:4px;">Nhập nghĩa của từ</div>
+        </label>
+    </div>
+    <div class="col-6">
+        <label class="quiz-type-card" id="lbl_multiple" onclick="selectType('multiple')">
+            <input type="radio" name="quiz_type" value="multiple">
+            <div style="font-size:2rem;margin-bottom:8px;">🔘</div>
+            <div style="font-weight:600;">Multiple choice</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:4px;">Chọn đáp án đúng</div>
+        </label>
+    </div>
+</div>
+
+<div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace;margin-bottom:10px;">Ngôn ngữ</div>
+<div class="row g-2 mb-4">
+    <div class="col-3">
+        <label class="lang-option selected" id="lbl_lang_all" onclick="selectLang('')">
+            <input type="radio" name="lang" value="" checked>
+            <div style="font-weight:600;">Tất cả</div>
+            <div style="font-size:.7rem;color:var(--muted);">{{ total }}</div>
+        </label>
+    </div>
+    {% for code, label in lang_choices %}
+    <div class="col-3">
+        <label class="lang-option" id="lbl_lang_{{ code }}" onclick="selectLang('{{ code }}')">
+            <input type="radio" name="lang" value="{{ code }}">
+            <span class="badge-lang badge-{{ code }}">{{ code|upper }}</span>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:4px;" id="count_{{ code }}">—</div>
+        </label>
+    </div>
+    {% endfor %}
+</div>
+
+<div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace;margin-bottom:10px;">Số câu hỏi: <span id="numLabel" style="color:var(--accent);">10</span></div>
+<input type="range" class="form-range mb-4" name="num_questions" min="5" max="20" value="10"
+    oninput="document.getElementById('numLabel').textContent=this.value"
+    style="accent-color:var(--accent);">
+
+<button type="submit" class="vm-btn vm-btn-primary w-100" style="padding:14px;font-size:1rem;justify-content:center;">🚀 Bắt đầu Quiz</button>
+</form>
+<div class="text-center mt-3"><a href="{% url 'quiz_history' %}" style="font-size:.8rem;color:var(--muted);">Xem lịch sử quiz →</a></div>
+</div></div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+<script>
+const WORD_COUNTS = {{ word_counts_js|safe }};
+// Điền số từ từng ngôn ngữ
+document.querySelectorAll('[id^="count_"]').forEach(el => {
+    const code = el.id.replace('count_', '');
+    el.textContent = WORD_COUNTS[code] ?? 0;
+});
+function selectType(v) {
+    document.querySelectorAll('.quiz-type-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('lbl_' + v).classList.add('selected');
+}
+function selectLang(v) {
+    document.querySelectorAll('.lang-option').forEach(c => c.classList.remove('selected'));
+    document.getElementById('lbl_lang_' + (v||'all')).classList.add('selected');
+}
+</script>
+{% endblock %}

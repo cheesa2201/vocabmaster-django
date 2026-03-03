@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Quiz {{ q_number }}/{{ total }} · VocabMaster{% endblock %}
+{% block page_title %}Quiz — Câu {{ q_number }} / {{ total }}{% endblock %}
+{% block extra_head %}
+<style>
+.quiz-progress { height: 4px; background: var(--border); border-radius: 99px; margin-bottom: 28px; }
+.quiz-progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+.word-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px;
+    text-align: center;
+    margin-bottom: 24px;
+}
+.word-big { font-family: 'Playfair Display', serif; font-size: 3rem; line-height: 1.1; }
+.word-reading { font-family: 'DM Mono', monospace; color: var(--muted); font-size: 1.1rem; margin-top: 6px; }
+.word-example { color: var(--muted); font-size: .875rem; font-style: italic; margin-top: 12px; }
+
+/* Fill */
+.fill-wrap { position: relative; }
+.fill-input {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 1rem;
+    font-family: 'DM Sans', sans-serif;
+    width: 100%;
+    transition: border-color .15s;
+}
+.fill-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,165,0,.1); }
+
+/* Multiple choice */
+.choice-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 14px 20px;
+    text-align: left;
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .95rem;
+    cursor: pointer;
+    transition: all .15s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.choice-btn:hover { border-color: var(--accent); background: rgba(240,165,0,.05); transform: translateX(4px); }
+.choice-key {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace; font-size: .75rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; color: var(--muted);
+}
+
+/* Feedback */
+.feedback-box {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: .875rem;
+}
+.feedback-ok  { background: rgba(63,185,80,.1);  border: 1px solid rgba(63,185,80,.3); }
+.feedback-err { background: rgba(248,81,73,.1);  border: 1px solid rgba(248,81,73,.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-6">
+
+<!-- Progress -->
+<div class="d-flex justify-content-between mb-2" style="font-size:.8rem;color:var(--muted);">
+    <span>{{ session.correct_count }} đúng</span>
+    <span>Còn {{ total|add:"-1"|add:"-"|add:q_index }} câu</span>
+</div>
+<div class="quiz-progress">
+    <div class="quiz-progress-fill" style="width:{{ progress_percent }}%"></div>
+</div>
+
+<!-- Feedback -->
+{% if last_result %}
+<div class="feedback-box {% if last_result.is_correct %}feedback-ok{% else %}feedback-err{% endif %}">
+    <span style="font-size:1.2rem;">{% if last_result.is_correct %}✅{% else %}❌{% endif %}</span>
+    <div>
+        {% if last_result.is_correct %}
+            <strong style="color:#7ee787;">Đúng!</strong> — <em>{{ last_result.word }}</em>
+        {% else %}
+            <strong style="color:#ffa198;">Sai!</strong>
+            Từ <strong>{{ last_result.word }}</strong>{% if last_result.reading %} ({{ last_result.reading }}){% endif %}:
+            Đáp án đúng là <strong style="color:var(--accent);">{{ last_result.correct_answer }}</strong>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Word card -->
+<div class="word-card">
+    <span class="badge-lang badge-{{ word.lang }}">{{ word.lang|upper }}</span>
+    {% if word.word_type %}<span class="badge-lang" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border);margin-left:4px;">{{ word.word_type }}</span>{% endif %}
+    <div class="word-big mt-3">{{ word.word }}</div>
+    {% if word.reading %}<div class="word-reading">{{ word.reading }}</div>{% endif %}
+    {% if word.example %}<div class="word-example">"{{ word.example }}"</div>{% endif %}
+</div>
+
+<!-- Answer form -->
+<form method="post" id="answerForm">
+{% csrf_token %}
+
+{% if session.quiz_type == 'fill' %}
+<div class="mb-3">
+    <label class="vm-label">Nghĩa của từ này là gì?</label>
+    <input type="text" name="answer" id="fillInput" class="fill-input"
+           placeholder="Nhập nghĩa..." autocomplete="off" autofocus>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:6px;">💡 Nhập nhiều nghĩa cách nhau bằng dấu phẩy</div>
+</div>
+<div class="d-flex gap-2">
+    <button type="submit" class="vm-btn vm-btn-primary flex-grow-1" style="justify-content:center;padding:12px;">Xác nhận →</button>
+    <button type="submit" name="answer" value="" class="vm-btn vm-btn-ghost">Bỏ qua</button>
+</div>
+
+{% else %}
+<div style="font-size:.8rem;color:var(--muted);margin-bottom:12px;">Chọn nghĩa đúng:</div>
+<div class="d-flex flex-column gap-2">
+    {% for choice in choices %}
+    <button type="submit" name="answer" value="{{ choice }}" class="choice-btn">
+        <span class="choice-key">{{ forloop.counter }}</span>
+        <span>{{ choice }}</span>
+    </button>
+    {% endfor %}
+</div>
+{% endif %}
+
+</form>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+{% if session.quiz_type == 'multiple' %}
+document.addEventListener('keydown', e => {
+    const btns = document.querySelectorAll('.choice-btn');
+    const n = parseInt(e.key);
+    if (n >= 1 && n <= btns.length) btns[n-1].click();
+});
+{% else %}
+document.getElementById('fillInput')?.focus();
+{% endif %}
+</script>
+{% endblock %}

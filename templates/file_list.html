@@ -1,0 +1,39 @@
+{% comment %}file_list.html{% endcomment %}
+{% extends 'base.html' %}
+{% block title %}File của tôi · VocabMaster{% endblock %}
+{% block page_title %}File của tôi{% endblock %}
+{% block nav_files %}active{% endblock %}
+{% block topbar_actions %}<a href="{% url 'upload_file' %}" class="vm-btn vm-btn-primary">+ Upload</a>{% endblock %}
+{% block content %}
+{% if files %}
+<div class="vm-card" style="padding:0;overflow:hidden;">
+<table class="vm-table">
+    <thead><tr><th>Tên file</th><th>Upload lúc</th><th>Hết hạn</th><th>Còn lại</th><th></th></tr></thead>
+    <tbody>
+    {% for f in files %}
+    <tr>
+        <td>
+            <strong>{{ f.title|default:f.file.name }}</strong>
+            <br><span style="font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;">{{ f.file.name|truncatechars:40 }}</span>
+        </td>
+        <td style="font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);">{{ f.uploaded_at|date:"d/m/Y" }}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:.8rem;color:var(--muted);">{{ f.expires_at|date:"d/m/Y" }}</td>
+        <td>
+            {% if f.days_remaining <= 3 %}<span class="badge-lang" style="background:rgba(248,81,73,.15);color:var(--danger);border:1px solid rgba(248,81,73,.3);">{{ f.days_remaining }}d</span>
+            {% elif f.days_remaining <= 7 %}<span class="badge-lang badge-mastery-1">{{ f.days_remaining }}d</span>
+            {% else %}<span class="badge-lang badge-mastery-0">{{ f.days_remaining }}d</span>{% endif %}
+        </td>
+        <td><a href="{% url 'view_file' f.pk %}" class="vm-btn vm-btn-ghost" style="padding:6px 14px;font-size:.8rem;">Xem →</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<div class="vm-card text-center" style="padding:48px;">
+    <div style="font-size:3rem;margin-bottom:12px;">📭</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:8px;">Chưa có file nào</div>
+    <a href="{% url 'upload_file' %}" class="vm-btn vm-btn-primary">Upload file đầu tiên →</a>
+</div>
+{% endif %}
+{% endblock %}

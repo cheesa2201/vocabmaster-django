@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard · VocabMaster{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        transition: border-color .2s, transform .2s;
+    }
+    .stat-card:hover { border-color: var(--accent-dim); transform: translateY(-2px); }
+    .stat-number { font-family: 'Playfair Display', serif; font-size: 2.2rem; line-height: 1; }
+    .stat-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; font-family: 'DM Mono', monospace; }
+    .lang-bar { height: 6px; border-radius: 99px; margin-top: 10px; background: var(--surface2); overflow: hidden; }
+    .quick-action {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        text-decoration: none;
+        color: var(--text);
+        transition: all .15s;
+    }
+    .quick-action:hover { border-color: var(--accent); background: rgba(240,165,0,.05); color: var(--text); }
+    .quick-action .qa-icon { font-size: 1.5rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--surface2); border-radius: 8px; }
+    .quick-action .qa-label { font-weight: 600; font-size: .9rem; }
+    .quick-action .qa-sub { font-size: .75rem; color: var(--muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    <!-- ── Total & lang stats ── -->
+    <div class="col-12">
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number" style="color:var(--accent)">{{ total }}</div>
+                    <div class="stat-label">Tổng từ vựng</div>
+                    <div class="lang-bar mt-2">
+                        <div style="height:100%;background:var(--accent);width:{% widthratio total max_words 100 %}%;border-radius:99px;"></div>
+                    </div>
+                    <small style="font-size:.7rem;color:var(--muted);">/ {{ max_words|default:10000 }} tối đa</small>
+                </div>
+            </div>
+            {% for code, data in stats.items %}
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center">
+                    <div class="stat-number
+                        {% if code == 'en' %}text-info
+                        {% elif code == 'zh' %}text-danger
+                        {% else %}" style="color:var(--accent){% endif %}">{{ data.total }}</div>
+                    <div class="stat-label">{{ data.label }}</div>
+                    {% if data.total > 0 %}
+                    <div class="lang-bar">
+                        <div style="height:100%;background:var(--success);width:{% widthratio data.mastered data.total 100 %}%;border-radius:99px;"></div>
+                    </div>
+                    <small style="font-size:.7rem;color:var(--muted);">{{ data.mastered }} thành thạo</small>
+                    {% else %}
+                    <div class="lang-bar"><div style="width:0;height:100%"></div></div>
+                    <small style="font-size:.7rem;color:var(--muted);">Chưa có từ</small>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ── Chart ── -->
+    {% if total > 0 %}
+    <div class="col-md-5">
+        <div class="vm-card h-100">
+            <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;font-family:'DM Mono',monospace;">Mức độ thành thạo</div>
+            <canvas id="masteryChart" height="200"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Quick actions ── -->
+    <div class="col-md-{% if total > 0 %}7{% else %}12{% endif %}">
+        <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-family:'DM Mono',monospace;">Truy cập nhanh</div>
+        <div class="row g-2">
+            <div class="col-6"><a href="{% url 'quiz_home' %}" class="quick-action"><div class="qa-icon">🧠</div><div><div class="qa-label">Quiz</div><div class="qa-sub">Fill & Multiple choice</div></div></a></div>
+            <div class="col-6"><a href="{% url 'flashcard' %}" class="quick-action"><div class="qa-icon">🃏</div><div><div class="qa-label">Flashcard</div><div class="qa-sub">Lật thẻ ôn tập</div></div></a></div>
+            <div class="col-6"><a href="{% url 'import_excel' %}" class="quick-action"><div class="qa-icon">📤</div><div><div class="qa-label">Import</div><div class="qa-sub">Excel / DOCX</div></div></a></div>
+            <div class="col-6"><a href="{% url 'word_list' %}" class="quick-action"><div class="qa-icon">📋</div><div><div class="qa-label">Từ vựng</div><div class="qa-sub">{{ total }} từ đang học</div></div></a></div>
+            <div class="col-6"><a href="{% url 'upload_file' %}" class="quick-action"><div class="qa-icon">📁</div><div><div class="qa-label">Upload File</div><div class="qa-sub">PDF / DOCX tài liệu</div></div></a></div>
+            <div class="col-6"><a href="{% url 'quiz_history' %}" class="quick-action"><div class="qa-icon">📊</div><div><div class="qa-label">Lịch sử</div><div class="qa-sub">Xem kết quả quiz</div></div></a></div>
+        </div>
+    </div>
+
+    <!-- ── Recent files ── -->
+    {% if recent_files %}
+    <div class="col-12">
+        <div class="vm-card">
+            <div style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;font-family:'DM Mono',monospace;">File gần đây</div>
+            <div class="row g-2">
+                {% for f in recent_files %}
+                <div class="col-md-4">
+                    <a href="{% url 'view_file' f.pk %}" style="text-decoration:none;">
+                        <div class="vm-card" style="padding:14px;">
+                            <div style="font-size:.9rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ f.title|default:f.file.name }}</div>
+                            <div style="font-size:.75rem;color:var(--muted);margin-top:4px;">Còn {{ f.days_remaining }} ngày</div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if total > 0 %}
+<script>
+const ctx = document.getElementById('masteryChart');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Chưa nhớ', 'Đang học', 'Thành thạo'],
+        datasets: [{
+            data: [
+                {{ mastery_counts.0|default:0 }},
+                {{ mastery_counts.1|default:0 }},
+                {{ mastery_counts.2|default:0 }},
+            ],
+            backgroundColor: ['rgba(139,148,158,.4)', 'rgba(240,165,0,.5)', 'rgba(63,185,80,.5)'],
+            borderColor:     ['#8b949e', '#f0a500', '#3fb950'],
+            borderWidth: 1.5,
+        }]
+    },
+    options: {
+        cutout: '70%',
+        plugins: { legend: { labels: { color: '#8b949e', font: { family: 'DM Sans' } } } }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,55 @@
+{% comment %}import_excel.html{% endcomment %}
+{% extends 'base.html' %}
+{% block title %}Import · VocabMaster{% endblock %}
+{% block page_title %}Import từ vựng{% endblock %}
+{% block nav_import %}active{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-7">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <span style="font-size:.85rem;color:var(--muted);">Đã có <strong style="color:var(--text);">{{ current_count }}</strong> / {{ max_words|default:10000 }} từ</span>
+    <div class="progress" style="width:160px;height:6px;">
+        <div class="progress-bar" style="width:{% widthratio current_count max_words|default:10000 100 %}%;"></div>
+    </div>
+</div>
+
+{% if slots_remaining <= 0 %}
+<div class="vm-alert vm-alert-error">⚠️ Đã đạt giới hạn {{ max_words }} từ! <a href="{% url 'word_list' %}" style="color:inherit;font-weight:600;">Xem danh sách →</a></div>
+{% else %}
+{% if slots_remaining < 500 %}<div class="vm-alert vm-alert-warning">⚠️ Còn <strong>{{ slots_remaining }}</strong> slot trống.</div>{% endif %}
+
+<div class="vm-card mb-4" style="background:rgba(88,166,255,.05);border-color:rgba(88,166,255,.2);">
+    <div style="font-size:.8rem;color:var(--info);font-family:'DM Mono',monospace;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">Cấu trúc file</div>
+    <table style="font-size:.8rem;font-family:'DM Mono',monospace;width:100%;border-collapse:collapse;">
+        <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:6px 10px;color:var(--muted);">Cột A</td><td style="padding:6px 10px;color:var(--info);">lang</td><td style="padding:6px 10px;color:var(--muted);">en / zh / jp</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:6px 10px;color:var(--muted);">Cột B</td><td style="padding:6px 10px;color:var(--info);">word</td><td style="padding:6px 10px;color:var(--muted);">Từ vựng</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:6px 10px;color:var(--muted);">Cột C</td><td style="padding:6px 10px;color:var(--info);">reading</td><td style="padding:6px 10px;color:var(--muted);">Cách đọc (tùy chọn)</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:6px 10px;color:var(--muted);">Cột D</td><td style="padding:6px 10px;color:var(--info);">meaning</td><td style="padding:6px 10px;color:var(--muted);">Nghĩa tiếng Việt</td>
+        </tr>
+        <tr><td style="padding:6px 10px;color:var(--muted);">E, F</td><td style="padding:6px 10px;color:var(--info);">word_type, example</td><td style="padding:6px 10px;color:var(--muted);">Tùy chọn</td></tr>
+    </table>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:8px;">💡 Re-import từ đã có sẽ cập nhật nội dung nhưng giữ nguyên tiến độ học.</div>
+</div>
+
+<div class="vm-card">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+        <label class="vm-label">Chọn file (.xlsx hoặc .docx)</label>
+        {{ form.file }}
+        {% if form.file.errors %}<div style="color:var(--danger);font-size:.8rem;margin-top:4px;">{{ form.file.errors }}</div>{% endif %}
+        <div style="font-size:.75rem;color:var(--muted);margin-top:6px;">Tối đa 5MB</div>
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="vm-btn vm-btn-primary">📤 Upload & Import</button>
+            <a href="{% url 'word_list' %}" class="vm-btn vm-btn-ghost">Hủy</a>
+        </div>
+    </form>
+</div>
+{% endif %}
+</div></div>
+{% endblock %}

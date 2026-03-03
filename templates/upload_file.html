@@ -1,0 +1,30 @@
+{% comment %}upload_file.html{% endcomment %}
+{% extends 'base.html' %}
+{% block title %}Upload File · VocabMaster{% endblock %}
+{% block page_title %}Upload File{% endblock %}
+{% block nav_upload %}active{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-6">
+<div class="vm-card">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+        <div class="mb-3">
+            <label class="vm-label">Tiêu đề (tùy chọn)</label>
+            <input type="text" name="title" class="vm-input" placeholder="VD: Từ vựng N3 - Tháng 3">
+        </div>
+        <div class="mb-4">
+            <label class="vm-label">File (PDF hoặc DOCX, tối đa 20MB)</label>
+            <div style="border:2px dashed var(--border);border-radius:10px;padding:32px;text-align:center;transition:border-color .15s;" id="dropZone">
+                <div style="font-size:2rem;margin-bottom:8px;">📁</div>
+                <div style="font-size:.875rem;color:var(--muted);margin-bottom:12px;">Kéo thả hoặc click để chọn file</div>
+                {{ form.file }}
+                {% if form.file.errors %}<div style="color:var(--danger);font-size:.8rem;margin-top:6px;">{{ form.file.errors }}</div>{% endif %}
+            </div>
+        </div>
+        <div style="font-size:.8rem;color:var(--muted);padding:10px 14px;background:var(--surface2);border-radius:8px;margin-bottom:16px;">
+            📅 File sẽ tự động bị xóa sau <strong style="color:var(--accent);">30 ngày</strong>
+        </div>
+        <button type="submit" class="vm-btn vm-btn-primary w-100" style="justify-content:center;padding:12px;">📤 Upload</button>
+    </form>
+</div>
+</div></div>
+{% endblock %}

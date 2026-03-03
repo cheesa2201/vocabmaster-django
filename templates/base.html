@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}VocabMaster{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.0" defer></script>
+
+    <style>
+        :root {
+            --bg:        #0d1117;
+            --surface:   #161b22;
+            --surface2:  #1c2128;
+            --border:    #30363d;
+            --accent:    #f0a500;
+            --accent-dim:#7d5700;
+            --text:      #e6edf3;
+            --muted:     #8b949e;
+            --success:   #3fb950;
+            --danger:    #f85149;
+            --info:      #58a6ff;
+            --sidebar-w: 230px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 400;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* ── Sidebar ─────────────────────────────── */
+        .sidebar {
+            width: var(--sidebar-w);
+            min-height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0;
+            z-index: 100;
+            transition: transform .25s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-brand .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.35rem;
+            color: var(--accent);
+            letter-spacing: .5px;
+            text-decoration: none;
+            display: block;
+        }
+        .sidebar-brand .tagline {
+            font-size: .7rem;
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+            margin-top: 2px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+        .nav-section {
+            padding: 8px 16px 4px;
+            font-size: .65rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 20px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: .875rem;
+            font-weight: 500;
+            border-left: 2px solid transparent;
+            transition: all .15s;
+        }
+        .nav-link:hover { color: var(--text); background: var(--surface2); }
+        .nav-link.active {
+            color: var(--accent);
+            border-left-color: var(--accent);
+            background: rgba(240,165,0,.08);
+        }
+        .nav-link .icon { font-size: 1rem; width: 20px; text-align: center; }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            font-size: .8rem;
+        }
+        .user-info { color: var(--muted); margin-bottom: 8px; }
+        .user-info strong { color: var(--text); display: block; }
+
+        /* ── Main content ──────────────────────────── */
+        .main-wrap {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            padding: 14px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .topbar .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            color: var(--text);
+        }
+
+        .page-body { padding: 32px; flex: 1; }
+
+        /* ── Components ────────────────────────────── */
+        .vm-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 24px;
+        }
+        .vm-card:hover { border-color: var(--accent-dim); }
+
+        .vm-btn {
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            font-size: .85rem;
+            border-radius: 8px;
+            padding: 9px 20px;
+            transition: all .15s;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .vm-btn-primary { background: var(--accent); color: #000; }
+        .vm-btn-primary:hover { background: #ffb700; color: #000; box-shadow: 0 0 20px rgba(240,165,0,.3); }
+        .vm-btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .vm-btn-ghost:hover { border-color: var(--text); color: var(--text); }
+        .vm-btn-danger { background: rgba(248,81,73,.15); border: 1px solid var(--danger); color: var(--danger); }
+
+        .badge-lang {
+            font-family: 'DM Mono', monospace;
+            font-size: .65rem;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: .5px;
+        }
+        .badge-en  { background: rgba(88,166,255,.15); color: var(--info); border: 1px solid rgba(88,166,255,.3); }
+        .badge-zh  { background: rgba(248,81,73,.15);  color: var(--danger); border: 1px solid rgba(248,81,73,.3); }
+        .badge-jp  { background: rgba(240,165,0,.15);  color: var(--accent); border: 1px solid rgba(240,165,0,.3); }
+
+        .badge-mastery-0 { background: rgba(139,148,158,.15); color: var(--muted); }
+        .badge-mastery-1 { background: rgba(240,165,0,.15); color: var(--accent); }
+        .badge-mastery-2 { background: rgba(63,185,80,.15); color: var(--success); }
+
+        .progress { background: var(--surface2); border-radius: 99px; }
+        .progress-bar { background: var(--accent); border-radius: 99px; transition: width .6s ease; }
+
+        /* ── Alerts ────────────────────────────────── */
+        .vm-alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: .875rem;
+            margin-bottom: 16px;
+            border: 1px solid;
+        }
+        .vm-alert-success { background: rgba(63,185,80,.1);  border-color: rgba(63,185,80,.3);  color: #7ee787; }
+        .vm-alert-error   { background: rgba(248,81,73,.1);  border-color: rgba(248,81,73,.3);  color: #ffa198; }
+        .vm-alert-warning { background: rgba(240,165,0,.1);  border-color: rgba(240,165,0,.3);  color: #e3b341; }
+        .vm-alert-info    { background: rgba(88,166,255,.1); border-color: rgba(88,166,255,.3); color: #79c0ff; }
+
+        /* ── Table ─────────────────────────────────── */
+        .vm-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+        .vm-table th {
+            padding: 10px 16px;
+            text-align: left;
+            color: var(--muted);
+            font-size: .7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'DM Mono', monospace;
+            border-bottom: 1px solid var(--border);
+        }
+        .vm-table td { padding: 12px 16px; border-bottom: 1px solid rgba(48,54,61,.5); vertical-align: middle; }
+        .vm-table tr:hover td { background: var(--surface2); }
+        .vm-table tr:last-child td { border-bottom: none; }
+
+        /* ── Forms ─────────────────────────────────── */
+        .vm-input {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .9rem;
+            width: 100%;
+            transition: border-color .15s;
+        }
+        .vm-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(240,165,0,.1); }
+        .vm-input::placeholder { color: var(--muted); }
+        .vm-label { font-size: .8rem; color: var(--muted); margin-bottom: 6px; display: block; font-weight: 500; }
+
+        /* ── Mobile hamburger ──────────────────────── */
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-wrap { margin-left: 0; }
+            .hamburger { display: block; }
+            .page-body { padding: 20px 16px; }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ── Sidebar ──────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <a href="{% url 'dashboard' %}" class="logo">VocabMaster</a>
+        <div class="tagline">language · memory</div>
+    </div>
+
+    <nav class="sidebar-nav">
+        <div class="nav-section">Học tập</div>
+        <a href="{% url 'dashboard' %}"   class="nav-link {% block nav_dashboard %}{% endblock %}"><span class="icon">🏠</span> Dashboard</a>
+        <a href="{% url 'flashcard' %}"   class="nav-link {% block nav_flashcard %}{% endblock %}"><span class="icon">🃏</span> Flashcard</a>
+        <a href="{% url 'quiz_home' %}"   class="nav-link {% block nav_quiz %}{% endblock %}"><span class="icon">🧠</span> Quiz</a>
+        <a href="{% url 'quiz_history' %}" class="nav-link {% block nav_history %}{% endblock %}"><span class="icon">📊</span> Lịch sử Quiz</a>
+
+        <div class="nav-section" style="margin-top:8px;">Từ vựng</div>
+        <a href="{% url 'word_list' %}"   class="nav-link {% block nav_words %}{% endblock %}"><span class="icon">📋</span> Danh sách từ</a>
+        <a href="{% url 'import_excel' %}" class="nav-link {% block nav_import %}{% endblock %}"><span class="icon">📤</span> Import</a>
+
+        <div class="nav-section" style="margin-top:8px;">Tài liệu</div>
+        <a href="{% url 'upload_file' %}" class="nav-link {% block nav_upload %}{% endblock %}"><span class="icon">📁</span> Upload File</a>
+        <a href="{% url 'file_list' %}"   class="nav-link {% block nav_files %}{% endblock %}"><span class="icon">🗂️</span> File của tôi</a>
+    </nav>
+
+    <div class="sidebar-footer">
+        {% if user.is_authenticated %}
+        <div class="user-info">
+            <strong>{{ user.username }}</strong>
+            {{ user.email }}
+        </div>
+        <a href="{% url 'account_logout' %}" class="vm-btn vm-btn-ghost w-100 justify-content-center">Đăng xuất</a>
+        {% else %}
+        <a href="{% url 'account_login' %}" class="vm-btn vm-btn-primary w-100 justify-content-center">Đăng nhập</a>
+        {% endif %}
+    </div>
+</aside>
+
+<!-- ── Main ─────────────────────────────────────── -->
+<div class="main-wrap">
+    <header class="topbar">
+        <div class="d-flex align-items-center gap-3">
+            <button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+            <span class="page-title">{% block page_title %}VocabMaster{% endblock %}</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            {% block topbar_actions %}{% endblock %}
+        </div>
+    </header>
+
+    <main class="page-body">
+        {% for msg in messages %}
+        <div class="vm-alert vm-alert-{{ msg.tags|default:'info' }}">{{ msg }}</div>
+        {% endfor %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

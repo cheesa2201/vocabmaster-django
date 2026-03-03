@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% block title %}Flashcard · VocabMaster{% endblock %}
+{% block page_title %}Flashcard{% endblock %}
+{% block nav_flashcard %}active{% endblock %}
+
+{% block topbar_actions %}
+<form method="get" class="d-flex align-items-center gap-2">
+    <select name="lang" class="vm-input" style="width:auto;padding:6px 12px;font-size:.8rem;" onchange="this.form.submit()">
+        <option value="" {% if not lang_filter %}selected{% endif %}>Tất cả ngôn ngữ</option>
+        {% for code, label in lang_choices %}
+        <option value="{{ code }}" {% if lang_filter == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+</form>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .fc-progress {
+        font-family: 'DM Mono', monospace;
+        font-size: .8rem;
+        color: var(--muted);
+    }
+    .fc-counter { font-size: 2rem; font-family: 'Playfair Display', serif; }
+
+    /* Flip card */
+    .card-scene { perspective: 1200px; cursor: pointer; user-select: none; }
+    .card-body-inner {
+        position: relative;
+        width: 100%;
+        height: 280px;
+        transition: transform .55s cubic-bezier(.4,0,.2,1);
+        transform-style: preserve-3d;
+    }
+    .card-scene.flipped .card-body-inner { transform: rotateY(180deg); }
+
+    .card-face {
+        position: absolute; inset: 0;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        border: 1px solid var(--border);
+    }
+    .card-front { background: var(--surface); }
+    .card-back  { background: var(--surface2); transform: rotateY(180deg); border-color: var(--accent-dim); }
+
+    .word-display {
+        font-family: 'Playfair Display', serif;
+        font-size: 2.5rem;
+        text-align: center;
+        line-height: 1.2;
+        color: var(--text);
+    }
+    .reading-display { color: var(--muted); font-size: 1rem; margin-top: 6px; font-family: 'DM Mono', monospace; }
+    .meaning-display { font-size: 1.2rem; color: var(--accent); text-align: center; font-weight: 500; }
+    .example-display { font-size: .85rem; color: var(--muted); text-align: center; margin-top: 10px; font-style: italic; }
+
+    .flip-hint { font-size: .72rem; color: var(--muted); margin-top: 16px; letter-spacing: 1px; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+
+    /* Nav buttons */
+    .nav-btn {
+        width: 44px; height: 44px;
+        border-radius: 50%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 1.1rem;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        transition: all .15s;
+    }
+    .nav-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .nav-btn:disabled { opacity: .3; cursor: default; }
+
+    /* Mastery buttons */
+    .mastery-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: .8rem;
+        font-weight: 600;
+        border: 1px solid;
+        cursor: pointer;
+        background: transparent;
+        transition: all .15s;
+        font-family: 'DM Sans', sans-serif;
+    }
+    .m-0 { border-color: #8b949e; color: #8b949e; }
+    .m-0:hover { background: rgba(139,148,158,.15); }
+    .m-1 { border-color: var(--accent); color: var(--accent); }
+    .m-1:hover { background: rgba(240,165,0,.15); }
+    .m-2 { border-color: var(--success); color: var(--success); }
+    .m-2:hover { background: rgba(63,185,80,.15); }
+
+    /* Keyboard hint */
+    .kbd { display: inline-block; padding: 2px 7px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if words %}
+<div class="row justify-content-center">
+<div class="col-lg-7 col-xl-6">
+
+    <!-- Progress -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="fc-progress">Bộ thẻ: <strong style="color:var(--text)">{{ words|length }} từ</strong></span>
+        <span id="cardCounter" class="fc-counter" style="font-size:1rem;color:var(--muted);">1 / {{ words|length }}</span>
+    </div>
+
+    <!-- Card -->
+    <div class="card-scene mb-3" id="cardScene" onclick="flipCard()">
+        <div class="card-body-inner" id="cardInner">
+            <div class="card-face card-front">
+                <span id="frontLang" class="badge-lang mb-3"></span>
+                <div class="word-display" id="frontWord"></div>
+                <div class="reading-display" id="frontReading"></div>
+                <div class="flip-hint">↻ nhấn để lật</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="meaning-display" id="backMeaning"></div>
+                <div class="example-display" id="backExample"></div>
+                <div style="margin-top:20px;">
+                    <span id="backMasteryBadge" class="badge-lang"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nav -->
+    <div class="d-flex align-items-center justify-content-center gap-3 mb-4">
+        <button class="nav-btn" id="btnPrev" onclick="navigate(-1)" disabled>←</button>
+        <div class="d-flex gap-2">
+            <button class="mastery-btn m-0" onclick="setMastery(0)">😶 Chưa nhớ</button>
+            <button class="mastery-btn m-1" onclick="setMastery(1)">🤔 Đang học</button>
+            <button class="mastery-btn m-2" onclick="setMastery(2)">✅ Thành thạo</button>
+        </div>
+        <button class="nav-btn" id="btnNext" onclick="navigate(1)">→</button>
+    </div>
+
+    <!-- Keyboard hints -->
+    <div class="text-center" style="font-size:.75rem;color:var(--muted);">
+        <span class="kbd">Space</span> lật &nbsp;
+        <span class="kbd">←</span><span class="kbd">→</span> điều hướng &nbsp;
+        <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> đánh dấu
+    </div>
+
+    <!-- Done state (hidden) -->
+    <div id="donePanel" class="vm-card text-center mt-4" style="display:none!important;">
+        <div style="font-size:2rem;margin-bottom:8px;">🎉</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.3rem;">Hoàn thành bộ thẻ!</div>
+        <div style="color:var(--muted);font-size:.875rem;margin:8px 0 16px;">Bạn đã ôn qua {{ words|length }} từ vựng</div>
+        <a href="{% url 'flashcard' %}{% if lang_filter %}?lang={{ lang_filter }}{% endif %}" class="vm-btn vm-btn-primary">Bộ thẻ mới</a>
+    </div>
+
+</div>
+</div>
+
+<!-- Word data -->
+<script>
+const WORDS = [
+    {% for w in words %}
+    {
+        id: {{ w.id }},
+        word: {{ w.word|escapejs|json_script:"_"|slice:"1:-1" }},
+        reading: "{{ w.reading|default:''|escapejs }}",
+        meaning: "{{ w.meaning|escapejs }}",
+        example: "{{ w.example|default:''|escapejs }}",
+        lang: "{{ w.lang }}",
+        mastery: {{ w.mastery }},
+    },
+    {% endfor %}
+];
+const MASTERY_LABELS = ['Chưa nhớ', 'Đang học', 'Thành thạo'];
+const MASTERY_CLASSES = ['badge-mastery-0', 'badge-mastery-1', 'badge-mastery-2'];
+const LANG_CLASSES = { en: 'badge-en', zh: 'badge-zh', jp: 'badge-jp' };
+const LANG_LABELS  = { en: 'EN', zh: 'ZH', jp: 'JP' };
+
+let cur = 0;
+let flipped = false;
+
+function render() {
+    const w = WORDS[cur];
+    flipped = false;
+    document.getElementById('cardScene').classList.remove('flipped');
+
+    document.getElementById('frontWord').textContent = w.word;
+    document.getElementById('frontReading').textContent = w.reading ? `(${w.reading})` : '';
+
+    const langBadge = document.getElementById('frontLang');
+    langBadge.textContent = LANG_LABELS[w.lang] || w.lang;
+    langBadge.className = 'badge-lang ' + (LANG_CLASSES[w.lang] || '');
+
+    document.getElementById('backMeaning').textContent = w.meaning;
+    document.getElementById('backExample').textContent = w.example ? `"${w.example}"` : '';
+
+    const mb = document.getElementById('backMasteryBadge');
+    mb.textContent = MASTERY_LABELS[w.mastery];
+    mb.className = 'badge-lang ' + MASTERY_CLASSES[w.mastery];
+
+    document.getElementById('cardCounter').textContent = `${cur+1} / ${WORDS.length}`;
+    document.getElementById('btnPrev').disabled = cur === 0;
+    document.getElementById('btnNext').disabled = cur === WORDS.length - 1;
+}
+
+function flipCard() {
+    flipped = !flipped;
+    document.getElementById('cardScene').classList.toggle('flipped', flipped);
+}
+
+function navigate(dir) {
+    const next = cur + dir;
+    if (next < 0 || next >= WORDS.length) return;
+    cur = next;
+    render();
+    if (cur === WORDS.length - 1) {
+        document.getElementById('donePanel').style.removeProperty('display');
+    }
+}
+
+function setMastery(level) {
+    const w = WORDS[cur];
+    w.mastery = level;
+    fetch(`/words/${w.id}/mastery/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `mastery=${level}`
+    });
+    // Update badge immediately
+    const mb = document.getElementById('backMasteryBadge');
+    mb.textContent = MASTERY_LABELS[level];
+    mb.className = 'badge-lang ' + MASTERY_CLASSES[level];
+    // Auto-advance
+    setTimeout(() => navigate(1), 300);
+}
+
+function getCookie(name) {
+    return document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith(name + '='))?.split('=')[1] || '';
+}
+
+document.addEventListener('keydown', e => {
+    if (e.key === ' ') { e.preventDefault(); flipCard(); }
+    if (e.key === 'ArrowRight') navigate(1);
+    if (e.key === 'ArrowLeft')  navigate(-1);
+    if (e.key === '1') setMastery(0);
+    if (e.key === '2') setMastery(1);
+    if (e.key === '3') setMastery(2);
+});
+
+render();
+</script>
+
+{% else %}
+<div class="vm-card text-center" style="padding:48px;">
+    <div style="font-size:3rem;margin-bottom:12px;">📭</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:8px;">Chưa có từ vựng</div>
+    <div style="color:var(--muted);margin-bottom:20px;">Hãy import từ Excel hoặc DOCX để bắt đầu</div>
+    <a href="{% url 'import_excel' %}" class="vm-btn vm-btn-primary">📤 Import ngay</a>
+</div>
+{% endif %}
+{% endblock %}

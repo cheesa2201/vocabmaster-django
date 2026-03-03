@@ -1,0 +1,22 @@
+{% comment %}register.html{% endcomment %}
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}Đăng ký · VocabMaster{% endblock %}
+{% block page_title %}Tạo tài khoản{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-2"><div class="col-md-5 col-lg-4">
+<div class="vm-card">
+    <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);">VocabMaster</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;">Start learning</div>
+    </div>
+    <form method="post">{% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="vm-btn vm-btn-primary w-100 mt-2" style="justify-content:center;padding:12px;">Tạo tài khoản</button>
+    </form>
+    <div style="text-align:center;margin-top:16px;font-size:.85rem;color:var(--muted);">
+        Đã có tài khoản? <a href="{% url 'account_login' %}" style="color:var(--accent);">Đăng nhập</a>
+    </div>
+</div>
+</div></div>
+{% endblock %}
