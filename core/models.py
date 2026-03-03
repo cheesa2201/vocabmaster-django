@@ -1,4 +1,5 @@
 from django.db import models
+<<<<<<< HEAD
 from django.contrib.auth.models import User
 from django.utils import timezone
 
@@ -110,3 +111,7 @@ class QuizAnswer(models.Model):
 
     def __str__(self):
         return f"{'✓' if self.is_correct else '✗'} {self.word.word}"
+=======
+
+# Create your models here.
+>>>>>>> fa8bf4865547a8d716a22e762087a632b9dc0d72
