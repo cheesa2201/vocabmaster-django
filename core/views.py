@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # BUG FIX: Bỏ "from urllib import request" — nó shadow Django request parameter
 # làm toàn bộ view crash với TypeError
 import json
@@ -454,8 +454,6 @@ def _update_mastery_quiz(word, correct):
     word.mastery = min(word.mastery + 1, 2) if correct else max(word.mastery - 1, 0)
     word.last_review = timezone.now()
     word.save(update_fields=['mastery', 'last_review'])
-=======
+
 from django.shortcuts import render
 
-# Create your views here.
->>>>>>> fa8bf4865547a8d716a22e762087a632b9dc0d72

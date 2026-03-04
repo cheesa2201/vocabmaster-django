@@ -1,8 +1,2 @@
-[build]
-builder = "NIXPACKS"
-
 [deploy]
-startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2"
-healthcheckPath = "/"
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3
+startCommand = "python manage.py migrate --noinput && python manage.py collectstatic --noinput && gunicorn vocabmaster.wsgi:application --bind 0.0.0.0:$PORT"

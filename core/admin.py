@@ -1,5 +1,4 @@
 from django.contrib import admin
-<<<<<<< HEAD
 from .models import FileUpload, QuizAnswer, QuizSession, Word
 
 
@@ -27,7 +26,4 @@ class QuizSessionAdmin(admin.ModelAdmin):
 class QuizAnswerAdmin(admin.ModelAdmin):
     list_display = ['session', 'word', 'is_correct', 'user_answer']
     list_filter = ['is_correct']
-=======
 
-# Register your models here.
->>>>>>> fa8bf4865547a8d716a22e762087a632b9dc0d72
