@@ -24,4 +24,8 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:$PORT", "--log-file", "-"]
+# BUG FIX 1: Dùng shell form để $PORT được expand đúng
+# BUG FIX 2: Thêm migrate + collectstatic trước khi start
+CMD python manage.py migrate --noinput && \
+    python manage.py collectstatic --noinput && \
+    gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --log-file -
