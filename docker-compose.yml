@@ -1,15 +1,16 @@
 services:
   web:
     build: .
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
+    ports:
+      - "8000:8000"
     depends_on:
       - db
       - redis
+    environment:
+      - DEBUG=True
 
   db:
     image: postgres:15
@@ -17,20 +18,13 @@ services:
       POSTGRES_DB: vocabmaster
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   redis:
     image: redis:7-alpine
-
-  celery:
-    build: .
-    command: celery -A config worker --loglevel=info
-    env_file:
-      - .env
-    depends_on:
-      - db
-      - redis
 
 volumes:
   postgres_data:
