@@ -22,6 +22,9 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+# BUG FIX: Tạo thư mục static trước để tránh warning W004
+RUN mkdir -p /app/static
+
 COPY . .
 
 # BUG FIX 1: Dùng shell form để $PORT được expand đúng
