@@ -1,4 +1,3 @@
-
 # BUG FIX: Bỏ "from urllib import request" — nó shadow Django request parameter
 # làm toàn bộ view crash với TypeError
 import json
@@ -410,7 +409,8 @@ def save_note(request, pk):
     note_text = request.POST.get('note', '').strip()
     # Lưu đơn giản: [{text, saved_at}]
     notes = file.notes_json or []
-    notes = [{'text': note_text, 'saved_at': timezone.now().isoformat()}]
+    # BUG FIX: dùng append thay vì gán mới → không mất ghi chú cũ
+    notes.append({'text': note_text, 'saved_at': timezone.now().isoformat()})
     file.notes_json = notes
     file.save(update_fields=['notes_json'])
 
@@ -455,5 +455,11 @@ def _update_mastery_quiz(word, correct):
     word.last_review = timezone.now()
     word.save(update_fields=['mastery', 'last_review'])
 
-from django.shortcuts import render
 
+# ── Health check (Railway) ────────────────────────────────────────────────────
+
+from django.http import HttpResponse
+
+def health_check(request):
+    """Public endpoint cho Railway healthcheck — không cần login."""
+    return HttpResponse("ok", content_type="text/plain", status=200)

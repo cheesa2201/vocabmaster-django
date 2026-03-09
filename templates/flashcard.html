@@ -166,7 +166,7 @@ const WORDS = [
     {% for w in words %}
     {
         id: {{ w.id }},
-        word: {{ w.word|escapejs|json_script:"_"|slice:"1:-1" }},
+        word: "{{ w.word|escapejs }}",
         reading: "{{ w.reading|default:''|escapejs }}",
         meaning: "{{ w.meaning|escapejs }}",
         example: "{{ w.example|default:''|escapejs }}",

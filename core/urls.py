@@ -1,13 +1,14 @@
 from django.urls import path
 from . import views
 
-# BUG FIX: 3 paths upload_file/files/files/<pk> trước đây nằm NGOÀI urlpatterns []
-# → chỉ là floating expressions, không được đăng ký → 404 mọi request
-
 urlpatterns = [
     # ── Core ──────────────────────────────────────────────────────────────────
     path('', views.dashboard, name='dashboard'),
     path('register/', views.register, name='register'),
+
+    # BUG FIX: Thêm /health/ — public endpoint cho Railway healthcheck
+    # Không cần login, trả về 200 "ok" để Railway xác nhận app đang chạy
+    path('health/', views.health_check, name='health_check'),
 
     # ── Words ─────────────────────────────────────────────────────────────────
     path('import/', views.import_excel, name='import_excel'),

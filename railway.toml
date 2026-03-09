@@ -2,9 +2,5 @@
 builder = "DOCKERFILE"
 
 [deploy]
-# BUG FIX: startCommand không cần nữa vì CMD trong Dockerfile đã xử lý
-# Chỉ giữ healthcheck và restart policy
-healthcheckPath = "/health/"
-healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3

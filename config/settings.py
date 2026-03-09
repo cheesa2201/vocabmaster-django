@@ -192,8 +192,9 @@ SOCIALACCOUNT_PROVIDERS = {
 
 REDIS_URL = os.getenv("REDIS_URL", "")
 
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
+# BUG FIX: Nếu REDIS_URL rỗng → set None, tránh Celery crash khi không có Redis
+CELERY_BROKER_URL = REDIS_URL or None
+CELERY_RESULT_BACKEND = REDIS_URL or None
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
@@ -213,5 +214,7 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
 
-    # Allowed hosts (an toàn cho free tier Railway)
-    ALLOWED_HOSTS = ["*"]  # hoặc dùng os.getenv("RAILWAY_PUBLIC_DOMAIN")
+    # BUG FIX: Không override ALLOWED_HOSTS = ["*"] ở đây
+    # Railway domain đã được append ở trên qua RAILWAY_PUBLIC_DOMAIN
+    # Nếu muốn cho phép mọi host (không khuyến khích): uncomment dòng dưới
+    # ALLOWED_HOSTS = ["*"]

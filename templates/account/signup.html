@@ -1,5 +1,4 @@
-{% comment %}register.html{% endcomment %}
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}Đăng ký · VocabMaster{% endblock %}
 {% block page_title %}Tạo tài khoản{% endblock %}
 {% block content %}
@@ -9,28 +8,25 @@
         <div style="font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--accent);">VocabMaster</div>
         <div style="font-size:.8rem;color:var(--muted);margin-top:4px;font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;">Start learning</div>
     </div>
-
     {% if form.errors %}
     <div class="vm-alert vm-alert-error">
         {% for field in form %}{% for error in field.errors %}<div>{{ field.label }}: {{ error }}</div>{% endfor %}{% endfor %}
         {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
     </div>
     {% endif %}
-
-    <form method="post">{% csrf_token %}
-        <div class="mb-3">
-            <label class="vm-label">Tên người dùng</label>
-            <input type="text" name="username" class="vm-input" placeholder="username"
-                   value="{{ form.username.value|default:'' }}" required autofocus />
-        </div>
+    <form method="post" action="{% url 'account_signup' %}">{% csrf_token %}
         <div class="mb-3">
             <label class="vm-label">Email</label>
-            <input type="email" name="email" class="vm-input" placeholder="email@example.com"
-                   value="{{ form.email.value|default:'' }}" required />
+            <input type="email" name="email" class="vm-input" placeholder="email@example.com" value="{{ form.email.value|default:'' }}" required autofocus />
+        </div>
+        <div class="mb-3">
+            <label class="vm-label">Tên người dùng</label>
+            <input type="text" name="username" class="vm-input" placeholder="username" value="{{ form.username.value|default:'' }}" required />
         </div>
         <div class="mb-3">
             <label class="vm-label">Mật khẩu</label>
             <input type="password" name="password1" class="vm-input" placeholder="••••••••" required />
+            <div style="font-size:.72rem;color:var(--muted);margin-top:5px;">Ít nhất 8 ký tự, không được toàn số</div>
         </div>
         <div class="mb-3">
             <label class="vm-label">Xác nhận mật khẩu</label>
