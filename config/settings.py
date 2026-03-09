@@ -218,3 +218,7 @@ if not DEBUG:
     # Railway domain đã được append ở trên qua RAILWAY_PUBLIC_DOMAIN
     # Nếu muốn cho phép mọi host (không khuyến khích): uncomment dòng dưới
     # ALLOWED_HOSTS = ["*"]
+    
+    LOGIN_URL = "login"
+    LOGIN_REDIRECT_URL = "home"
+    LOGOUT_REDIRECT_URL = "login"
