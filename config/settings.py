@@ -104,8 +104,8 @@ DATABASES = {
     )
 }
 
-# Local fallback: nếu không có DATABASE_URL hoặc đang DEBUG → dùng SQLite
-if "DATABASE_URL" not in os.environ or DEBUG:
+# chỉ fallback SQLite khi KHÔNG có DATABASE_URL
+if "DATABASE_URL" not in os.environ:
     DATABASES["default"] = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
