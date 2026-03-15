@@ -463,3 +463,61 @@ from django.http import HttpResponse
 def health_check(request):
     """Public endpoint cho Railway healthcheck — không cần login."""
     return HttpResponse("ok", content_type="text/plain", status=200)
+
+# ── AI integration ───────────────────────────────────────────────────────────
+from ai.gemini_service import dictionary_lookup, generate_flashcard, generate_quiz, translate_word
+
+
+def ai_translate(request):
+    word = request.GET.get("word")
+
+    if not word:
+        return JsonResponse({"error": "Missing word"}, status=400)
+
+    result = translate_word(word)
+
+    return JsonResponse({
+        "word": word,
+        "translation": result
+    }, json_dumps_params={"ensure_ascii": False})
+    
+def ai_flashcard(request):
+
+    word = request.GET.get("word")
+
+    if not word:
+        return JsonResponse({"error": "Missing word"})
+
+    result = generate_flashcard(word)
+
+    return JsonResponse(result, json_dumps_params={"ensure_ascii": False})
+
+def ai_quiz(request):
+
+    word = request.GET.get("word")
+
+    if not word:
+        return JsonResponse({"error": "Missing word"})
+
+    result = generate_quiz(word)
+
+    return JsonResponse(result, json_dumps_params={"ensure_ascii": False})
+
+
+def ai_dictionary(request):
+
+    word = request.GET.get("word")
+    lang = request.GET.get("lang", "en")
+
+    if not word:
+        return JsonResponse({"error": "Missing word"})
+
+    result = dictionary_lookup(word, lang)
+
+    return JsonResponse(result, json_dumps_params={"ensure_ascii": False})
+
+def privacy_policy(request):
+    return render(request, "privacy.html")
+
+def delete_data(request):
+    return render(request, "delete_data.html")

@@ -35,11 +35,11 @@ class ExcelImportForm(forms.Form):
 class WordForm(forms.ModelForm):
     class Meta:
         model = Word
-        fields = ['lang', 'word', 'reading', 'meaning', 'word_type', 'example']
+        fields = ['lang', 'word', 'pronunciation', 'meaning', 'word_type', 'example']
         widgets = {
             'lang': forms.Select(attrs={'class': 'form-select'}),
             'word': forms.TextInput(attrs={'class': 'form-control'}),
-            'reading': forms.TextInput(attrs={'class': 'form-control'}),
+            'pronunciation': forms.TextInput(attrs={'class': 'form-control'}),
             'meaning': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'word_type': forms.TextInput(attrs={'class': 'form-control'}),
             'example': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),

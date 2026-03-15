@@ -6,28 +6,53 @@ from django.utils import timezone
 LANGUAGE_CHOICES = [
     ('en', 'English'),
     ('zh', 'Chinese'),
-    ('jp', 'Japanese'),
+    ('ja', 'Japanese'),
 ]
 
 MAX_WORDS_PER_USER = 10_000
+
+SOURCE_CHOICES = [
+    ('manual','Manual'),
+    ('ai','AI'),
+    ('import','Import'),
+]
+
+source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default='manual')
+
+
 
 
 # ── Word ──────────────────────────────────────────────────────────────────────
 
 class Word(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='words')
-    lang = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
-    word = models.CharField(max_length=200)
-    reading = models.CharField(max_length=200, blank=True)
-    meaning = models.TextField()
-    word_type = models.CharField(max_length=20, blank=True)
-    example = models.TextField(blank=True)
-    mastery = models.PositiveSmallIntegerField(default=0, choices=[
-        (0, 'Chưa nhớ'), (1, 'Đang học'), (2, 'Thành thạo')
-    ])
-    last_review = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='words')
+
+    lang = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default='en')
+
+    word = models.CharField(max_length=200)
+
+    pronunciation = models.CharField(max_length=200, blank=True)
+
+    meaning = models.TextField()
+
+    word_type = models.CharField(max_length=20, blank=True)
+
+    example = models.TextField(blank=True)
+
+    level = models.CharField(max_length=2, blank=True)
+
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default='manual')
+
+    mastery = models.PositiveSmallIntegerField(default=0, choices=[
+        (0, 'Chưa nhớ'),
+        (1, 'Đang học'),
+        (2, 'Thành thạo')
+    ])
+
+    last_review = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         unique_together = ['user', 'word', 'lang']
         ordering = ['-created_at']
@@ -111,4 +136,4 @@ class QuizAnswer(models.Model):
 
     def __str__(self):
         return f"{'✓' if self.is_correct else '✗'} {self.word.word}"
-
+    

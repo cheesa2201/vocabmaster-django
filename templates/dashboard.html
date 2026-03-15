@@ -146,6 +146,20 @@ new Chart(ctx, {
         plugins: { legend: { labels: { color: '#8b949e', font: { family: 'DM Sans' } } } }
     }
 });
+<input id="wordInput" placeholder="Enter word">
+<button onclick="translateWord()">Translate</button>
+
+<p id="result"></p>
+
+<script>
+async function translateWord(){
+    let word = document.getElementById("wordInput").value;
+
+    let res = await fetch(`/ai-translate/?word=${word}`);
+    let data = await res.json();
+
+    document.getElementById("result").innerText = data.translation;
+}
 </script>
 {% endif %}
 {% endblock %}

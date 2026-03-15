@@ -7,29 +7,42 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ─────────────────────────────────────────────────────────
-# SECURITY & BASIC
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
+# SECURITY
+# ─────────────────────────────────────────
 
-SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-this-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-this")
 
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,0.0.0.0"
-).split(",")
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1,0.0.0.0,.ngrok-free.dev"
+    ).split(",")
+]
 
-# Railway tự động cung cấp domain qua biến này
+# CSRF cho ngrok
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.ngrok-free.dev",
+]
+
+# Fix OAuth HTTPS khi dùng ngrok
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+
+# Railway domain
 RAILWAY_HOST = os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
 if RAILWAY_HOST:
     ALLOWED_HOSTS.append(RAILWAY_HOST)
 
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
 # APPS
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
 
 INSTALLED_APPS = [
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -49,40 +62,59 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.facebook",
+
 ]
 
-# ─────────────────────────────────────────────────────────
+SITE_ID = 1
+
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# ─────────────────────────────────────────
 # MIDDLEWARE
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
 
 MIDDLEWARE = [
+
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # phải ngay sau SecurityMiddleware
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+
     "django.middleware.csrf.CsrfViewMiddleware",
+
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+
     "django_htmx.middleware.HtmxMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
 
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
 # TEMPLATES
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
+
         "APP_DIRS": True,
+
         "OPTIONS": {
             "context_processors": [
+
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
+
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
@@ -92,9 +124,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# ─────────────────────────────────────────────────────────
-# DATABASE (Railway PostgreSQL hoặc local SQLite fallback)
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
+# DATABASE
+# ─────────────────────────────────────────
 
 DATABASES = {
     "default": dj_database_url.config(
@@ -104,121 +136,113 @@ DATABASES = {
     )
 }
 
-# chỉ fallback SQLite khi KHÔNG có DATABASE_URL
+# fallback SQLite khi local
 if "DATABASE_URL" not in os.environ:
-    DATABASES["default"] = {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
 
-# ─────────────────────────────────────────────────────────
-# PASSWORD VALIDATION
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
+# AUTHENTICATION
+# ─────────────────────────────────────────
 
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+AUTHENTICATION_BACKENDS = [
+
+    "django.contrib.auth.backends.ModelBackend",
+
+    "allauth.account.auth_backends.AuthenticationBackend",
+
 ]
 
-# ─────────────────────────────────────────────────────────
-# INTERNATIONALIZATION
-# ─────────────────────────────────────────────────────────
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 
-LANGUAGE_CODE = "vi"
-TIME_ZONE = "Asia/Ho_Chi_Minh"
-USE_I18N = True
-USE_TZ = True
-
-# ─────────────────────────────────────────────────────────
-# STATIC FILES (Whitenoise cho production)
-# ─────────────────────────────────────────────────────────
-
-STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
-# ─────────────────────────────────────────────────────────
-# MEDIA
-# ─────────────────────────────────────────────────────────
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# ─────────────────────────────────────────────────────────
-# SITE & ALLAUTH (cập nhật config mới, loại bỏ deprecated)
-# ─────────────────────────────────────────────────────────
-
-SITE_ID = 1
-
-LOGIN_REDIRECT_URL = "dashboard"
-ACCOUNT_LOGOUT_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
-
-# Cấu hình allauth mới (thay thế các setting deprecated)
-ACCOUNT_LOGIN_METHODS = {"email": True}  # đăng nhập bằng email
-ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
-ACCOUNT_EMAIL_VERIFICATION = "optional"  # hoặc "mandatory"
-ACCOUNT_UNIQUE_EMAIL = True
+# ─────────────────────────────────────────
+# SOCIAL LOGIN
+# ─────────────────────────────────────────
 
 SOCIALACCOUNT_PROVIDERS = {
+
     "google": {
-        "APP": {
-            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
-            "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
-            "key": "",
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online"
         },
-        "SCOPE": ["profile", "email"],
-        "AUTH_PARAMS": {"access_type": "online"},
     },
+
     "facebook": {
-        "APP": {
-            "client_id": os.getenv("FACEBOOK_APP_ID", ""),
-            "secret": os.getenv("FACEBOOK_APP_SECRET", ""),
-            "key": "",
-        },
+
         "METHOD": "oauth2",
-        "SCOPE": ["email", "public_profile"],
-    },
+
+        "SCOPE": [
+            "email",
+            "public_profile",
+        ],
+
+        "AUTH_PARAMS": {
+            "auth_type": "reauthenticate"
+        },
+    }
 }
 
-# ─────────────────────────────────────────────────────────
-# CELERY
-# ─────────────────────────────────────────────────────────
+# ─────────────────────────────────────────
+# PASSWORD
+# ─────────────────────────────────────────
 
-REDIS_URL = os.getenv("REDIS_URL", "")
+AUTH_PASSWORD_VALIDATORS = [
 
-# BUG FIX: Nếu REDIS_URL rỗng → set None, tránh Celery crash khi không có Redis
-CELERY_BROKER_URL = REDIS_URL or None
-CELERY_RESULT_BACKEND = REDIS_URL or None
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
 
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
 
-# ─────────────────────────────────────────────────────────
-# SECURITY (Production)
-# ─────────────────────────────────────────────────────────
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
 
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
 
-    # BUG FIX: Không override ALLOWED_HOSTS = ["*"] ở đây
-    # Railway domain đã được append ở trên qua RAILWAY_PUBLIC_DOMAIN
-    # Nếu muốn cho phép mọi host (không khuyến khích): uncomment dòng dưới
-    # ALLOWED_HOSTS = ["*"]
-    
-    LOGIN_URL = "login"
-    LOGIN_REDIRECT_URL = "home"
-    LOGOUT_REDIRECT_URL = "login"
+]
+
+# ─────────────────────────────────────────
+# INTERNATIONALIZATION
+# ─────────────────────────────────────────
+
+LANGUAGE_CODE = "en-us"
+
+TIME_ZONE = "UTC"
+
+USE_I18N = True
+
+USE_TZ = True
+
+# ─────────────────────────────────────────
+# STATIC
+# ─────────────────────────────────────────
+
+STATIC_URL = "/static/"
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# ─────────────────────────────────────────
+# DEFAULT PK
+# ─────────────────────────────────────────
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
