@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+import cloudinary
 from dotenv import load_dotenv
 import dj_database_url
 
@@ -62,10 +63,12 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.facebook",
+    "cloudinary", "cloudinary_storage",
+  
 
 ]
 
-SITE_ID = 1
+SITE_ID = 2
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
@@ -128,16 +131,18 @@ WSGI_APPLICATION = "config.wsgi.application"
 # DATABASE
 # ─────────────────────────────────────────
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL"),
-        conn_max_age=600,
-        ssl_require=not DEBUG,
-    )
-}
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# fallback SQLite khi local
-if "DATABASE_URL" not in os.environ:
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=not DEBUG,
+        )
+    }
+else:
+    # fallback local SQLite
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -190,6 +195,10 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+SOCIALACCOUNT_PROVIDERS["facebook"].update({
+    "FIELDS": ["id", "name", "email"],
+})
 
 # ─────────────────────────────────────────
 # PASSWORD
@@ -246,3 +255,14 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # ─────────────────────────────────────────
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+
+cloudinary.config(
+  cloud_name = "daro9erbh",
+  api_key = "378648588172127",
+  api_secret = "vxoklkLG7C2OCUBmvFky60Bc43s"
+)
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
